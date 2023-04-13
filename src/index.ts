@@ -45,6 +45,40 @@ const onReady = () => {
     }
 };
 
+const reactToTweet = async (msg: Message, reiter: boolean = false) => {
+    const reply = await msg.reply("Pong!");
+
+    const collector = reply.createReactionCollector({
+        filter,
+    });
+
+    reply.react("✅");
+    reply.react("🔁");
+    reply.react("❌");
+
+    collector.on("collect", (r) => {
+        console.log(`Collected ${r.emoji.name}`);
+
+        if (isAdmin(r.message as Message, r.users.cache.last()?.id as string)) {
+            collector.stop();
+            switch (r.emoji.name) {
+                case "✅":
+                    // TODO: Publish to twitter
+                    r.message.channel.send("Tweet Published ✅");
+                    break;
+                case "🔁":
+                    // TODO: Requery the tweet from chatGPT
+                    reactToTweet(reply, true);
+                    break;
+                case "❌":
+                    //TODO: Do not publish to twitter
+                    r.message.channel.send("Tweet Discarded ❌");
+                    break;
+            }
+        }
+    });
+};
+
 // what do when we get a message
 const onMessage = (message: Message) => {
     console.log(`Received message: ${message.content}`);
@@ -54,27 +88,7 @@ const onMessage = (message: Message) => {
     }
 
     if (message.content.toLowerCase() === "ping") {
-        message.reply("Pong!").then((reply) => {
-            reply.react("✅");
-            reply.react("🔁");
-            reply.react("❌");
-
-            const collector = reply.createReactionCollector({
-                filter,
-            });
-
-            collector.on("collect", (r) =>
-                console.log(
-                    `Collected ${r.emoji.name}: ${isAdmin(
-                        message,
-                        r.users.cache.last()?.id as string
-                    )}`
-                )
-            );
-            collector.on("end", (collected) =>
-                console.log(`Collected ${collected.size} items`)
-            );
-        });
+        reactToTweet(message);
     }
 };
 
