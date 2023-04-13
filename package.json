@@ -1,0 +1,30 @@
+{
+    "name": "darth-vader",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "build": "tsc",
+        "start": "tsc & node dist/index.js",
+        "debug": "node --inspect dist/index.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Suryansh-23/darth-vader.git"
+    },
+    "author": "Suryansh-23",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/Suryansh-23/darth-vader/issues"
+    },
+    "homepage": "https://github.com/Suryansh-23/darth-vader#readme",
+    "devDependencies": {
+        "@types/node": "^18.15.11",
+        "@types/ws": "^8.5.4",
+        "typescript": "^5.0.4"
+    },
+    "dependencies": {
+        "discord.js": "^14.9.0",
+        "dotenv": "^16.0.3"
+    }
+}
