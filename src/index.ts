@@ -116,9 +116,6 @@ client.on(Events.MessageCreate, onMessage);
 
 // Log in to Discord with your client's token
 client.login(process.env.DISCORD_TOKEN);
-// (async () => {
-//     const resp = await openai.getCompletion(
-//         createMessage("Frontend is harder than backend???")
-//     );
-//     console.log(resp);
-// })();
+(async () => {
+    
+})();
