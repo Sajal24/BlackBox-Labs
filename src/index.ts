@@ -8,8 +8,8 @@ import {
     User,
 } from "discord.js";
 import dotenv from "dotenv";
-import { test_id } from "./constants";
-import { isAdmin } from "./helpers";
+import { test_id, tweets_id } from "./constants";
+import { isThisRole, isTweetShift, parseTweetShiftMessage } from "./helpers";
 dotenv.config();
 
 // Discord token is required.
@@ -37,7 +37,6 @@ const filter = (reaction: MessageReaction, user: User) => {
 };
 
 const onReady = () => {
-    (client.channels.cache.get(test_id) as TextChannel)?.send("Hello, world!");
     console.log("Connected");
 
     if (client.user) {
@@ -45,8 +44,13 @@ const onReady = () => {
     }
 };
 
-const reactToTweet = async (msg: Message, reiter: boolean = false) => {
-    const reply = await msg.reply("Pong!");
+const reactToTweet = async (
+    msg: Message,
+    text: string,
+    link: string,
+    reiter: boolean = false
+) => {
+    const reply = await msg.reply(`text: ${text}\nlink: ${link}`);
 
     const collector = reply.createReactionCollector({
         filter,
@@ -56,23 +60,29 @@ const reactToTweet = async (msg: Message, reiter: boolean = false) => {
     reply.react("🔁");
     reply.react("❌");
 
-    collector.on("collect", (r) => {
-        console.log(`Collected ${r.emoji.name}`);
+    collector.on("collect", (reaction) => {
+        console.log(`Collected ${reaction.emoji.name}`);
 
-        if (isAdmin(r.message as Message, r.users.cache.last()?.id as string)) {
+        if (
+            isThisRole(
+                reaction.message as Message,
+                reaction.users.cache.last()?.id as string,
+                "human"
+            )
+        ) {
             collector.stop();
-            switch (r.emoji.name) {
+            switch (reaction.emoji.name) {
                 case "✅":
                     // TODO: Publish to twitter
-                    r.message.channel.send("Tweet Published ✅");
+                    reaction.message.channel.send("Tweet Published ✅");
                     break;
                 case "🔁":
                     // TODO: Requery the tweet from chatGPT
-                    reactToTweet(reply, true);
+                    reactToTweet(reply, text, link, true);
                     break;
                 case "❌":
                     //TODO: Do not publish to twitter
-                    r.message.channel.send("Tweet Discarded ❌");
+                    reaction.message.channel.send("Tweet Discarded ❌");
                     break;
             }
         }
@@ -80,15 +90,21 @@ const reactToTweet = async (msg: Message, reiter: boolean = false) => {
 };
 
 // what do when we get a message
-const onMessage = (message: Message) => {
+const onMessage = async (message: Message) => {
     console.log(`Received message: ${message.content}`);
-    if (message.author.bot) {
-        // TODO: Respond acc.
-        return;
-    }
+    console.log(isThisRole(message, message.author.id, "human"));
+    console.log(isTweetShift(message));
 
-    if (message.content.toLowerCase() === "ping") {
-        reactToTweet(message);
+    if (
+        message.channelId === tweets_id &&
+        (isThisRole(message, message.author.id, "human") ||
+            isTweetShift(message))
+    ) {
+        const [text, link] = parseTweetShiftMessage(message.content);
+
+        if (text && link) {
+            reactToTweet(message, text, link);
+        }
     }
 };
 
