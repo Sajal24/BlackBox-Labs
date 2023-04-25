@@ -2,14 +2,14 @@ import {
     Events,
     Message,
     Client,
-    TextChannel,
     GatewayIntentBits,
     MessageReaction,
     User,
 } from "discord.js";
 import dotenv from "dotenv";
-import { test_id, tweets_id } from "./constants";
+import { test_id, tweets_id, createMessage } from "./constants";
 import { isThisRole, isTweetShift, parseTweetShiftMessage } from "./helpers";
+import ChatCompletion from "./openai";
 dotenv.config();
 
 // Discord token is required.
@@ -28,6 +28,8 @@ const client = new Client({
         GatewayIntentBits.GuildMembers,
     ],
 });
+const openai = new ChatCompletion(process.env.OPENAI_API_KEY as string);
+
 const filter = (reaction: MessageReaction, user: User) => {
     if (reaction.emoji.name === null) {
         return false;
@@ -50,7 +52,8 @@ const reactToTweet = async (
     link: string,
     reiter: boolean = false
 ) => {
-    const reply = await msg.reply(`text: ${text}\nlink: ${link}`);
+    const resp = (await openai.getCompletion(createMessage(text))) || "";
+    const reply = await msg.reply(resp);
 
     const collector = reply.createReactionCollector({
         filter,
@@ -113,3 +116,9 @@ client.on(Events.MessageCreate, onMessage);
 
 // Log in to Discord with your client's token
 client.login(process.env.DISCORD_TOKEN);
+// (async () => {
+//     const resp = await openai.getCompletion(
+//         createMessage("Frontend is harder than backend???")
+//     );
+//     console.log(resp);
+// })();
