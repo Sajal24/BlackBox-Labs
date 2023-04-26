@@ -1,4 +1,15 @@
-import { Message } from "discord.js";
+import { Client, Message } from "discord.js";
+
+const sendMsgInChannel = (msg: string, channelId: string, client: Client) => {
+    const channel = client.channels.cache.get(channelId);
+
+    if (channel?.isTextBased()) {
+        channel.send(msg);
+        return true;
+    } else {
+        return false;
+    }
+};
 
 const isThisRole = (message: Message, userId: string, refRole: string) => {
     const guildMember = message.guild?.members.cache.get(userId);
@@ -25,4 +36,4 @@ const parseTweetShiftMessage = (msg: string) => {
     return [text, link];
 };
 
-export { isThisRole,isTweetShift, parseTweetShiftMessage };
+export { sendMsgInChannel, isThisRole, isTweetShift, parseTweetShiftMessage };

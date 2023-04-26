@@ -10,6 +10,7 @@ import dotenv from "dotenv";
 import { test_id, tweets_id, createMessage } from "./constants";
 import { isThisRole, isTweetShift, parseTweetShiftMessage } from "./helpers";
 import ChatCompletion from "./openai";
+import TwitterHandler from "./twitterAuth";
 dotenv.config();
 
 // Discord token is required.
@@ -29,6 +30,7 @@ const client = new Client({
     ],
 });
 const openai = new ChatCompletion(process.env.OPENAI_API_KEY as string);
+const twitter = new TwitterHandler(client);
 
 const filter = (reaction: MessageReaction, user: User) => {
     if (reaction.emoji.name === null) {
@@ -44,6 +46,8 @@ const onReady = () => {
     if (client.user) {
         console.log(`Logged in as ${client.user.tag}.`);
     }
+
+    twitter.init();
 };
 
 const reactToTweet = async (
@@ -116,6 +120,4 @@ client.on(Events.MessageCreate, onMessage);
 
 // Log in to Discord with your client's token
 client.login(process.env.DISCORD_TOKEN);
-(async () => {
-    
-})();
+// (async () => {})();
