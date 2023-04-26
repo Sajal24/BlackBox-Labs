@@ -8,7 +8,12 @@ import {
 } from "discord.js";
 import dotenv from "dotenv";
 import { test_id, tweets_id, createMessage } from "./constants";
-import { isThisRole, isTweetShift, parseTweetShiftMessage } from "./helpers";
+import {
+    isThisRole,
+    isTweetShift,
+    parseTweetId,
+    parseTweetShiftMessage,
+} from "./helpers";
 import ChatCompletion from "./openai";
 import TwitterHandler from "./twitterAuth";
 dotenv.config();
@@ -80,7 +85,8 @@ const reactToTweet = async (
             collector.stop();
             switch (reaction.emoji.name) {
                 case "✅":
-                    // TODO: Publish to twitter
+                    twitter.replyToTweet(parseTweetId(link), resp as string);
+
                     reaction.message.channel.send("Tweet Published ✅");
                     break;
                 case "🔁":

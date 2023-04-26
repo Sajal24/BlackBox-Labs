@@ -11,10 +11,11 @@ require("dotenv").config();
 
 class TwitterHandler {
     app: express.Application;
-    client: TwitterApi;
+    client: TwitterApi | undefined;
     accessToken: string;
     refreshToken: string;
     discordClient: Client<boolean>;
+    apiAccess: boolean;
     constructor(discordClient: Client) {
         // <1> Serialization and deserialization
         passport.serializeUser((user, done) => {
@@ -41,6 +42,42 @@ class TwitterHandler {
                     this.accessToken = accessToken;
                     this.refreshToken = refreshToken;
 
+                    sendMsgInChannel(
+                        "Twitter authentication successful!",
+                        test_id,
+                        discordClient
+                    );
+
+                    const tmpToken = {
+                        accessToken: "",
+                        refreshToken: "",
+                    };
+                    const credentials = {
+                        clientId: process.env.CLIENT_ID || "",
+                        clientSecret: process.env.CLIENT_SECRET || "",
+                    };
+                    const autoRefresherPlugin =
+                        new TwitterApiAutoTokenRefresher({
+                            refreshToken: this.refreshToken,
+                            refreshCredentials: credentials,
+                            onTokenUpdate(token) {
+                                tmpToken.accessToken = token.accessToken;
+                                tmpToken.refreshToken = token.refreshToken!;
+                                // store in DB/Redis/...
+                            },
+                            onTokenRefreshError(error) {
+                                console.error("Refresh error", error);
+                            },
+                        });
+                    this.accessToken = tmpToken.accessToken;
+                    this.refreshToken = tmpToken.refreshToken;
+                    this.apiAccess = true;
+
+                    //for the refesh token and tweeting and replying
+                    this.client = new TwitterApi(this.accessToken, {
+                        plugins: [autoRefresherPlugin],
+                    });
+
                     return done(null, profile);
                 }
             )
@@ -50,43 +87,11 @@ class TwitterHandler {
         this.accessToken = "";
         this.refreshToken = "";
         this.discordClient = discordClient;
+        this.client = undefined;
+        this.apiAccess = false;
 
         // <4> Passport and session middleware initialization
         this.setupRoutes();
-
-        const tmpToken = {
-            accessToken: "",
-            refreshToken: "",
-        };
-        const credentials = {
-            clientId: process.env.CLIENT_ID || "",
-            clientSecret: process.env.CLIENT_SECRET || "",
-        };
-        const autoRefresherPlugin = new TwitterApiAutoTokenRefresher({
-            refreshToken: this.refreshToken,
-            refreshCredentials: credentials,
-            onTokenUpdate(token) {
-                tmpToken.accessToken = token.accessToken;
-                tmpToken.refreshToken = token.refreshToken!;
-                // store in DB/Redis/...
-            },
-            onTokenRefreshError(error) {
-                console.error("Refresh error", error);
-            },
-        });
-        this.accessToken = tmpToken.accessToken;
-        this.refreshToken = tmpToken.refreshToken;
-
-        //for the refesh token and tweeting and replying
-        this.client = new TwitterApi(
-            {
-                clientId: `${process.env.CLIENT_ID}`,
-                clientSecret: `${process.env.CLIENT_SECRET}`,
-            },
-            {
-                plugins: [autoRefresherPlugin],
-            }
-        );
     }
 
     private setupRoutes = () => {
@@ -142,8 +147,38 @@ class TwitterHandler {
         );
     };
 
-    tweet = async (tweetMsg: string) => {
-        await this.client.v2.tweet(tweetMsg);
+    postTweet = async (tweetMsg: string) => {
+        if (!this.apiAccess) {
+            sendMsgInChannel(
+                "Twitter authentication failed!",
+                test_id,
+                this.discordClient
+            );
+            return;
+        }
+
+        try {
+            await this.client?.v2.tweet(tweetMsg);
+        } catch (error) {
+            console.log(error, tweetMsg);
+        }
+    };
+
+    replyToTweet = async (tweetId: string, replyMsg: string) => {
+        if (!this.apiAccess) {
+            sendMsgInChannel(
+                "Twitter authentication failed!",
+                test_id,
+                this.discordClient
+            );
+            return;
+        }
+
+        try {
+            await this.client?.v2.reply(replyMsg, tweetId);
+        } catch (error) {
+            console.log(error, tweetId, replyMsg);
+        }
     };
 }
 

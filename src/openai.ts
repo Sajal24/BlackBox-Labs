@@ -44,9 +44,17 @@ class ChatCompletion {
                 ? this.defaultReplyMaxTokens
                 : this.defaultMaxTokens;
         try {
-            const response = await this.openai.createChatCompletion(opts);
+            let response = (await this.openai.createChatCompletion(opts)).data
+                .choices[0].message?.content;
 
-            return response.data.choices[0].message;
+            if (response?.startsWith('"')) {
+                response = response.slice(1);
+            }
+            if (response?.endsWith('"')) {
+                response = response.slice(0, -1);
+            }
+
+            return response;
         } catch (err) {
             throw new Error(
                 `Unable to get completion from OpenAI API.\n${err}`

@@ -36,4 +36,15 @@ const parseTweetShiftMessage = (msg: string) => {
     return [text, link];
 };
 
-export { sendMsgInChannel, isThisRole, isTweetShift, parseTweetShiftMessage };
+const parseTweetId = (url: string) => {
+    const tweetId = url.slice(url.lastIndexOf("/") + 1);
+    return tweetId;
+};
+
+export {
+    sendMsgInChannel,
+    isThisRole,
+    isTweetShift,
+    parseTweetShiftMessage,
+    parseTweetId,
+};
