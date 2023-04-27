@@ -62,6 +62,7 @@ const reactToTweet = async (
     reiter: boolean = false
 ) => {
     const resp = (await openai.getCompletion(createMessage(text))) || "";
+    console.log("Prompt Answer: ", resp);
     const reply = await msg.reply(resp);
 
     const collector = reply.createReactionCollector({
