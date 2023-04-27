@@ -33,7 +33,7 @@ class TwitterHandler {
                     clientID: process.env.CLIENT_ID || "",
                     clientSecret: process.env.CLIENT_SECRET || "",
                     clientType: "confidential",
-                    callbackURL: `${process.env.BASE_URL}/auth/twitter/callback`,
+                    callbackURL: `${process.env.EXTERNAL_URL}/auth/twitter/callback`,
                 },
                 // <3> Verify callback
                 (accessToken, refreshToken, profile, done) => {

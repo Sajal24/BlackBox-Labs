@@ -53,8 +53,11 @@ class ChatCompletion {
             if (response?.endsWith('"')) {
                 response = response.slice(0, -1);
             }
+            if (response?.startsWith("Reply:")) {
+                response = response.slice(6);
+            }
 
-            return response;
+            return response?.trim();
         } catch (err) {
             throw new Error(
                 `Unable to get completion from OpenAI API.\n${err}`
