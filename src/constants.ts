@@ -12,7 +12,7 @@ const reply_prompt: ChatCompletionRequestMessage[] = [
     {
         role: "system",
         content:
-            "The reply should be human like, with random errors in writing, use of appropriate emojis. Consider the format of content, replies on twitter as they are short and crisp. Never mention yourself as an AI Language Model, write the response considering yourself a human.",
+            "The reply should be human like, with random errors in writing, use of appropriate emojis. Consider the format of content, replies on twitter as they are short and crisp. Never mention yourself as an AI Language Model, write the response considering yourself a human. Never include hashtags.",
     },
     {
         role: "user",

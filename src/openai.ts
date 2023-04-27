@@ -48,13 +48,19 @@ class ChatCompletion {
                 .choices[0].message?.content;
 
             if (response?.startsWith('"')) {
-                response = response.slice(1);
+                response = response.slice(1).trim();
             }
             if (response?.endsWith('"')) {
-                response = response.slice(0, -1);
+                response = response.slice(0, -1).trim();
             }
             if (response?.startsWith("Reply:")) {
-                response = response.slice(6);
+                response = response.slice(6).trim();
+            }
+            if (response?.startsWith('"')) {
+                response = response.slice(1).trim();
+            }
+            if (response?.endsWith('"')) {
+                response = response.slice(0, -1).trim();
             }
 
             return response?.trim();
