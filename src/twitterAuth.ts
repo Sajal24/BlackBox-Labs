@@ -105,7 +105,7 @@ class TwitterHandler {
         );
 
         this.app.get("/", (_, res) => {
-            res.end(`<h1>Authentication example</h1>`);
+            res.end(`<h1>Twitter Auth API Home</h1>`);
         });
 
         // <5> Start authentication flow
@@ -136,12 +136,12 @@ class TwitterHandler {
     };
 
     init = () => {
-        this.app.listen(3030, "127.0.0.1", () => {
-            console.log(`Listening on ${process.env.BASE_URL}`);
+        this.app.listen(3030, "0.0.0.0", () => {
+            console.log(`Listening on ${process.env.EXTERNAL_URL}`);
         });
 
         sendMsgInChannel(
-            `${process.env.BASE_URL}/auth/twitter` || "",
+            `${process.env.EXTERNAL_URL}/auth/twitter` || "",
             test_id,
             this.discordClient
         );
