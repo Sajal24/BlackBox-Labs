@@ -55,12 +55,7 @@ const onReady = () => {
     twitter.init();
 };
 
-const reactToTweet = async (
-    msg: Message,
-    text: string,
-    link: string,
-    reiter: boolean = false
-) => {
+const reactToTweet = async (msg: Message, text: string, link: string) => {
     const resp = (await openai.getCompletion(createMessage(text))) || "";
     console.log("Prompt Answer: ", resp);
     const reply = await msg.reply(resp);
@@ -88,15 +83,15 @@ const reactToTweet = async (
                 case "✅":
                     twitter.replyToTweet(parseTweetId(link), resp as string);
 
-                    reaction.message.channel.send("Tweet Published ✅");
+                    reaction.message.reply("Tweet Published ✅");
                     break;
                 case "🔁":
                     // TODO: Requery the tweet from chatGPT
-                    reactToTweet(reply, text, link, true);
+                    reactToTweet(reply, text, link);
                     break;
                 case "❌":
                     //TODO: Do not publish to twitter
-                    reaction.message.channel.send("Tweet Discarded ❌");
+                    reaction.message.reply("Tweet Discarded ❌");
                     break;
             }
         }

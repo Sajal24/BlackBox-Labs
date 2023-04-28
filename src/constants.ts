@@ -22,7 +22,7 @@ const reply_prompt: ChatCompletionRequestMessage[] = [
 ];
 
 const createMessage = (tweet: string) => {
-    const tmp = reply_prompt;
+    const tmp = Array.from(reply_prompt);
     tmp[1].content += `\nTweet: \`${tweet}\``;
     return tmp;
 };

@@ -1,9 +1,4 @@
-import {
-    ChatCompletionRequestMessage,
-    Configuration,
-    CreateChatCompletionRequest,
-    OpenAIApi,
-} from "openai";
+import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
 
 class ChatCompletion {
     openai: OpenAIApi;
@@ -25,25 +20,18 @@ class ChatCompletion {
 
     async getCompletion(
         prompt: ChatCompletionRequestMessage[],
-        reply: boolean = true,
-        options: CreateChatCompletionRequest = {
+        reply: boolean = true
+    ) {
+        const opts = {
             model: this.defaultModel,
             messages: prompt,
             temperature: this.defaultTemperature,
             max_tokens: reply
                 ? this.defaultReplyMaxTokens
                 : this.defaultMaxTokens,
-        }
-    ) {
-        const opts = options;
-        opts.model = opts.model || this.defaultModel;
-        opts.messages = opts.messages || prompt;
-        opts.temperature = opts.temperature || this.defaultTemperature;
-        opts.max_tokens =
-            opts.max_tokens || reply
-                ? this.defaultReplyMaxTokens
-                : this.defaultMaxTokens;
+        };
         try {
+            console.log("Sending completion request to OpenAI API: ", opts);
             let response = (await this.openai.createChatCompletion(opts)).data
                 .choices[0].message?.content;
 
