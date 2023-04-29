@@ -16,6 +16,7 @@ class TwitterHandler {
     refreshToken: string;
     discordClient: Client<boolean>;
     apiAccess: boolean;
+    readOnlyClient: TwitterApi;
     constructor(discordClient: Client) {
         // <1> Serialization and deserialization
         passport.serializeUser((user, done) => {
@@ -69,6 +70,7 @@ class TwitterHandler {
                                 console.error("Refresh error", error);
                             },
                         });
+
                     this.accessToken = tmpToken.accessToken;
                     this.refreshToken = tmpToken.refreshToken;
                     this.apiAccess = true;
@@ -77,6 +79,8 @@ class TwitterHandler {
                     this.client = new TwitterApi(this.accessToken, {
                         plugins: [autoRefresherPlugin],
                     });
+
+                    // console.log(this.fetchTweet("1643344456031059968"));
 
                     return done(null, profile);
                 }
@@ -87,6 +91,7 @@ class TwitterHandler {
         this.accessToken = "";
         this.refreshToken = "";
         this.discordClient = discordClient;
+        this.readOnlyClient = new TwitterApi(process.env.BEARER_TOKEN || "");
         this.client = undefined;
         this.apiAccess = false;
 
@@ -136,7 +141,7 @@ class TwitterHandler {
     };
 
     init = () => {
-        this.app.listen(3030, "0.0.0.0", () => {
+        this.app.listen(3030, process.env.BASE_URL || "", () => {
             console.log(`Listening on ${process.env.EXTERNAL_URL}`);
         });
 
@@ -145,6 +150,15 @@ class TwitterHandler {
             test_id,
             this.discordClient
         );
+    };
+
+    fetchTweet = async (tweetId: string) => {
+        const tweet = await this.client?.v2.singleTweet(tweetId, {
+            expansions: ["entities.mentions.username", "in_reply_to_user_id"],
+        });
+
+        // Access the text property of the tweet to get the text of the tweet
+        return tweet?.data.text || "";
     };
 
     postTweet = async (tweetMsg: string) => {
@@ -158,7 +172,7 @@ class TwitterHandler {
         }
 
         try {
-            await this.client?.v2.tweet(tweetMsg);
+            console.log(await this.client?.v2.tweet(tweetMsg));
         } catch (error) {
             console.log(error, tweetMsg);
         }
@@ -179,6 +193,52 @@ class TwitterHandler {
         } catch (error) {
             console.log(error, tweetId, replyMsg);
         }
+    };
+
+    isThread = async (tweetId: string) => {
+        let tweet = await this.client?.v1.get(`statuses/show/${tweetId}`, {
+            tweet_mode: "extended",
+        });
+
+        while (tweet.in_reply_to_status_id) {
+            tweet = await this.client?.v1.get(
+                `statuses/show/${tweet.in_reply_to_status_id}`,
+                {
+                    tweet_mode: "extended",
+                }
+            );
+        }
+
+        return tweet.in_reply_to_status_id === null;
+    };
+
+    fetchThread = async (tweetId: string) => {
+        const tweets = [];
+        let cursor;
+        try {
+            do {
+                const response: any = await this.client?.v1.get(
+                    "statuses/show",
+                    {
+                        id: tweetId,
+                        tweet_mode: "extended",
+                        trim_user: true,
+                        include_ext_alt_text: true,
+                        ...(cursor ? { max_id: cursor } : {}),
+                    }
+                );
+
+                tweets.push(response);
+
+                cursor = response.in_reply_to_status_id_str;
+            } while (cursor);
+
+            console.log(tweets);
+        } catch (err) {
+            console.error(err);
+        }
+
+        return tweets;
     };
 }
 

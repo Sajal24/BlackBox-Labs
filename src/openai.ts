@@ -1,4 +1,5 @@
 import { ChatCompletionRequestMessage, Configuration, OpenAIApi } from "openai";
+import { removeHashtag, trimString } from "./helpers";
 
 class ChatCompletion {
     openai: OpenAIApi;
@@ -14,44 +15,62 @@ class ChatCompletion {
         this.openai = new OpenAIApi(config);
         this.defaultTemperature = 0.7;
         this.defaultModel = "gpt-3.5-turbo";
-        this.defaultReplyMaxTokens = 70;
-        this.defaultMaxTokens = 100;
+        this.defaultReplyMaxTokens = 100;
+        this.defaultMaxTokens = 512;
     }
 
     async getCompletion(
         prompt: ChatCompletionRequestMessage[],
-        reply: boolean = true
+        isReply: boolean
     ) {
         const opts = {
             model: this.defaultModel,
             messages: prompt,
             temperature: this.defaultTemperature,
-            max_tokens: reply
+            max_tokens: isReply
                 ? this.defaultReplyMaxTokens
                 : this.defaultMaxTokens,
         };
         try {
             console.log("Sending completion request to OpenAI API: ", opts);
-            let response = (await this.openai.createChatCompletion(opts)).data
-                .choices[0].message?.content;
+            let resp = (
+                await this.openai.createChatCompletion(opts)
+            ).data.choices[0].message?.content.trim();
 
-            if (response?.startsWith('"')) {
-                response = response.slice(1).trim();
-            }
-            if (response?.endsWith('"')) {
-                response = response.slice(0, -1).trim();
-            }
-            if (response?.startsWith("Reply:")) {
-                response = response.slice(6).trim();
-            }
-            if (response?.startsWith('"')) {
-                response = response.slice(1).trim();
-            }
-            if (response?.endsWith('"')) {
-                response = response.slice(0, -1).trim();
+            if (isReply) {
+                if (resp?.startsWith('"')) {
+                    resp = resp.slice(1).trim();
+                }
+                if (resp?.endsWith('"')) {
+                    resp = resp.slice(0, -1).trim();
+                }
+                if (resp?.startsWith("Reply:")) {
+                    resp = resp.slice(6).trim();
+                }
+                if (resp?.startsWith('"')) {
+                    resp = resp.slice(1).trim();
+                }
+                if (resp?.endsWith('"')) {
+                    resp = resp.slice(0, -1).trim();
+                }
+            } else {
+                if (resp?.startsWith("<tweet>:")) {
+                    resp = resp.slice(8).trim();
+                }
+                resp = trimString(resp || "", "`").trim();
+                if (resp.startsWith("Hook:")) {
+                    resp = resp.slice(5).trim();
+                }
+                resp = resp
+                    .split("\n")
+                    .map((line) => trimString(line, " "))
+                    .join("\n");
+
+                resp = resp.replace("```", "");
+                resp = removeHashtag(resp);
             }
 
-            return response?.trim();
+            return resp?.trim();
         } catch (err) {
             throw new Error(
                 `Unable to get completion from OpenAI API.\n${err}`
