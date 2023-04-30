@@ -61,12 +61,12 @@ class TwitterHandler {
                         new TwitterApiAutoTokenRefresher({
                             refreshToken: this.refreshToken,
                             refreshCredentials: credentials,
-                            onTokenUpdate(token) {
+                            onTokenUpdate(token: any) {
                                 tmpToken.accessToken = token.accessToken;
                                 tmpToken.refreshToken = token.refreshToken!;
                                 // store in DB/Redis/...
                             },
-                            onTokenRefreshError(error) {
+                            onTokenRefreshError(error: Error) {
                                 console.error("Refresh error", error);
                             },
                         });
