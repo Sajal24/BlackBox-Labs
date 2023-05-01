@@ -4,7 +4,11 @@ import { Client } from "discord.js";
 import express from "express";
 import session from "express-session";
 import passport from "passport";
-import { TwitterApi } from "twitter-api-v2";
+import {
+    IClientTokenOauth,
+    TwitterApi,
+    TwitterApiTokens,
+} from "twitter-api-v2";
 import { sendMsgInChannel } from "./helpers";
 import { test_id } from "./constants";
 require("dotenv").config();
@@ -16,7 +20,7 @@ class TwitterHandler {
     refreshToken: string;
     discordClient: Client<boolean>;
     apiAccess: boolean;
-    readOnlyClient: TwitterApi;
+    v1Client: TwitterApi;
     constructor(discordClient: Client) {
         // <1> Serialization and deserialization
         passport.serializeUser((user, done) => {
@@ -91,7 +95,12 @@ class TwitterHandler {
         this.accessToken = "";
         this.refreshToken = "";
         this.discordClient = discordClient;
-        this.readOnlyClient = new TwitterApi(process.env.BEARER_TOKEN || "");
+        this.v1Client = new TwitterApi({
+            appKey: process.env.APP_KEY || "",
+            appSecret: process.env.APP_KEY_SECRET || "",
+            accessToken: process.env.ACCESS_TOKEN || "",
+            accessSecret: process.env.ACCESS_TOKEN_SECRET || "",
+        });
         this.client = undefined;
         this.apiAccess = false;
 
@@ -140,6 +149,26 @@ class TwitterHandler {
         );
     };
 
+    private getMimeType = (url: string) => {
+        const extension = url.slice(url.lastIndexOf(".") + 1);
+        switch (extension) {
+            case "png":
+                return "image/png";
+            case "jpg":
+                return "image/jpeg";
+            case "gif":
+                return "image/gif";
+            default:
+                return "image/webp";
+        }
+    };
+
+    private getBufferFromURL = async (url: string) => {
+        const res = await fetch(url);
+        const buffer = await res.arrayBuffer();
+        return Buffer.from(buffer);
+    };
+
     init = () => {
         this.app.listen(3030, process.env.BASE_URL || "", () => {
             console.log(`Listening on ${process.env.EXTERNAL_URL}`);
@@ -173,6 +202,36 @@ class TwitterHandler {
 
         try {
             console.log(await this.client?.v2.tweet(tweetMsg));
+        } catch (error) {
+            console.log(error, tweetMsg);
+        }
+    };
+
+    postTweetWithMedia = async (tweetMsg: string, mediaURL: string) => {
+        if (!this.apiAccess) {
+            sendMsgInChannel(
+                "Twitter authentication failed!",
+                test_id,
+                this.discordClient
+            );
+            return;
+        }
+
+        try {
+            const uploadedMediaId = await this.v1Client?.v1.uploadMedia(
+                await this.getBufferFromURL(mediaURL),
+                {
+                    target: "tweet",
+                    mimeType: this.getMimeType(mediaURL),
+                }
+            );
+            console.log(
+                await this.client?.v2.tweet(tweetMsg, {
+                    media: {
+                        media_ids: [uploadedMediaId || ""],
+                    },
+                })
+            );
         } catch (error) {
             console.log(error, tweetMsg);
         }

@@ -1,7 +1,12 @@
 import { ChatCompletionRequestMessage } from "openai";
 
-const test_id = "1096031365260132382";
-const tweets_id = "1095433175938895953";
+// PROD SERVER IDS
+// const test_id = "1096031365260132382";
+// const tweets_id = "1095433175938895953";
+
+// DEV SERVER IDS
+const test_id = "1102236109490098333";
+const tweets_id = "1102236109490098332";
 /*
 v1 
 Context: The following tweet is a tweet from a person on twitter in the Tech Space. Generate a genuine, constructive, helpful, appreciating, value-adding reply to this tweet. The reply should be short and crisp. The reply can also include questions, appreciating message, doubt or general message. Assume, that the tweet is written by a person well versed with the field in question.

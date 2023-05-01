@@ -2,7 +2,7 @@ import { Client, Events, GatewayIntentBits, Message } from "discord.js";
 import dotenv from "dotenv";
 import cron from "node-cron";
 import { createReplyPromptObj } from "./constants";
-import { cronTweetHandler } from "./cronFuncs";
+import { cronTweetHandler, cronTweetMemeHandler } from "./cronFuncs";
 import {
     filterReaction,
     isThisRole,
@@ -41,6 +41,10 @@ cron.schedule("0 10,17 * * *", async () => {
 
 cron.schedule("0 14,21 * * *", () => {
     cronTweetHandler(generatePromptTools(), openai, client, twitter);
+});
+
+cron.schedule("*/2 * * * *", () => {
+    cronTweetMemeHandler(client, twitter);
 });
 
 // what do when we login to the discord server
