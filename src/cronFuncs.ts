@@ -23,6 +23,7 @@ const cronTweetHandler = async (
     if (!isTweetValid(tweetText)) {
         tweetMsg?.edit("Tweet is not valid ❌. Regenerating New Tweet...");
         cronTweetHandler(tweetHook, openai, discord, twitter);
+        return;
     }
 
     tweetMsg?.react("✅");
